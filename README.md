@@ -4,7 +4,7 @@ MedFlow est une application SaaS destinée aux cliniques et médecins pour gére
 
 Tech stack:
 
-Next.js (App Router) + Prisma + Auth.js + Tailwind + Stripe.
+Next.js (App Router) + React + Prisma + Auth.js + Tailwind + Stripe.
 
 ## Prérequis
 - Node.js 18+ et npm
