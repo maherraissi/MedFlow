@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Professional Medical Palette - Light Mode */
+    --background: 210 40% 98%; /* Soft Slate White */
+    --foreground: 222 47% 11%; /* Deep Navy Black */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary: Deep Ocean Blue (Trust, Stability, Professionalism) */
+    --primary: 221 83% 53%; /* Vivid Blue */
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary: Emerald/Teal (Health, Calmness) */
+    --secondary: 173 58% 39%; /* Medical Green */
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted: Subtle grays for separation */
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent: Warm Orange for CTAs (use sparingly) */
+    --accent: 24 94% 50%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Professional Medical Palette - Dark Mode */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 10%; /* Slightly lighter than background */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%; /* Lighter blue for dark mode */
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 173 58% 45%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 217 19% 27%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 24 94% 60%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 19% 27%;
+    --input: 217 19% 27%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Gradients & Utilities */
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary;
+  }
+  
+  .bg-gradient-primary {
+    @apply bg-gradient-to-br from-blue-600 to-indigo-700;
+  }
+
+  .bg-gradient-secondary {
+    @apply bg-gradient-to-br from-emerald-500 to-teal-600;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-lg dark:bg-black/30 dark:border-white/10;
+  }
+  
+  .glass-card {
+    @apply bg-white/50 backdrop-blur-md border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-300 dark:bg-gray-900/50 dark:border-gray-800/50;
+  }
+}
+
+/* Animations */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}

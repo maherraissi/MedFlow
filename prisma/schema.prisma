@@ -1,0 +1,346 @@
+// prisma/schema.prisma
+// MedFlow - SaaS pour Cliniques & Médecins
+// Cahier des Charges: multi-tenant, RBAC, gestion patients, rendez-vous, facturation, paiements
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============= CLINIC (Remplace Tenant) =============
+
+model Clinic {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  timezone  String   @default("UTC")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users        User[]
+  patients     Patient[]
+  services     Service[]
+  appointments Appointment[]
+  invoices     Invoice[]
+  auditLogs    AuditLog[]
+
+  @@map("clinics")
+}
+
+// ============= USERS & AUTH =============
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String? // Optional: for credentials provider
+  role          Role      @default(RECEPTIONIST)
+  clinicId      String
+  isActive      Boolean   @default(true)
+  status        UserStatus @default(ACTIVE)
+  invitationToken String?  @unique
+  invitationExpiresAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  clinic             Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointmentsAsDoc  Appointment[] @relation("DoctorAppointments")
+  consultations      Consultation[]
+  prescriptions      Prescription[]
+  auditLogs          AuditLog[]
+  accounts           Account[]
+  sessions           Session[]
+
+  @@index([email])
+  @@index([clinicId])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  RECEPTIONIST
+  PATIENT
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+// ============= PATIENTS =============
+
+model Patient {
+  id              String   @id @default(cuid())
+  clinicId        String
+  name            String
+  email           String?
+  phone           String?
+  dateOfBirth     DateTime?
+  gender          Gender?
+  address         String?
+  medicalHistory  String?  // JSON format
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  clinic          Clinic          @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointments    Appointment[]
+  invoices        Invoice[]
+  consultations   Consultation[]
+
+  @@index([clinicId])
+  @@index([email])
+  @@map("patients")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+// ============= SERVICES =============
+
+model Service {
+  id          String   @id @default(cuid())
+  clinicId    String
+  name        String
+  description String?
+  durationMinutes Int
+  price       Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  clinic       Clinic        @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([clinicId])
+  @@map("services")
+}
+
+// ============= APPOINTMENTS =============
+
+model Appointment {
+  id        String            @id @default(cuid())
+  clinicId  String
+  patientId String
+  doctorId  String
+  serviceId String
+  startAt   DateTime
+  endAt     DateTime
+  status    AppointmentStatus @default(BOOKED)
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  // Relations
+  clinic       Clinic         @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient      Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       User           @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  service      Service        @relation(fields: [serviceId], references: [id])
+  consultation Consultation?
+  invoice      Invoice?
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([startAt])
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+// ============= CONSULTATIONS =============
+
+model Consultation {
+  id        String   @id @default(cuid())
+  appointmentId String @unique
+  patientId String
+  doctorId  String
+  notes     String?
+  diagnosis String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  appointment   Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor        User           @relation(fields: [doctorId], references: [id])
+  prescriptions Prescription[]
+
+  @@index([appointmentId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("consultations")
+}
+
+// ============= PRESCRIPTIONS =============
+
+model Prescription {
+  id            String   @id @default(cuid())
+  consultationId String
+  doctorId      String
+  items         String   // JSON format: [{name, dosage, duration, instructions}]
+  pdfUrl        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  consultation  Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  doctor        User         @relation(fields: [doctorId], references: [id])
+
+  @@index([consultationId])
+  @@index([doctorId])
+  @@map("prescriptions")
+}
+
+// ============= INVOICES =============
+
+model Invoice {
+  id            String        @id @default(cuid())
+  clinicId      String
+  patientId     String
+  appointmentId String?       @unique
+  items         String?       // JSON format: [{description, quantity, unitPrice}]
+  total         Float
+  status        InvoiceStatus @default(DRAFT)
+  dueDate       DateTime?
+  paidAt        DateTime?
+  stripeSessionId String?
+  stripePaymentIntentId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  clinic      Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+  payments    Payment[]
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([status])
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// ============= PAYMENTS =============
+
+model Payment {
+  id              String        @id @default(cuid())
+  invoiceId       String
+  amount          Float
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  stripePaymentId String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([stripePaymentId])
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  STRIPE
+  MANUAL
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+
+// ============= AUDIT LOGS =============
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  clinicId      String
+  userId        String
+  action        String   // CREATE, UPDATE, DELETE, etc.
+  resourceType  String   // Patient, Appointment, Invoice, etc.
+  resourceId    String
+  changes       String?  // JSON format of what changed
+  createdAt     DateTime @default(now())
+
+  // Relations
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([clinicId])
+  @@index([userId])
+  @@index([resourceType])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
