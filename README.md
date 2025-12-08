@@ -64,8 +64,7 @@ git push -u origin main
 ```
 
 ## Documentation projet
-- docs/EXPLICATION_FR.md — structure et fichiers (FR)
-- docs/شرح_هيكلة_المشروع_AR.md — بنية المشروع (AR)
+- docs/EXPLICATION_FR.md — structure et fichiers
 
 ## Roadmap (sprints)
 - S1: Auth + Onboarding + Dashboard
