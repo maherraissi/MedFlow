@@ -50,6 +50,22 @@ export const UpdateClinicSchema = ClinicSchema.partial();
 
 // ============= PATIENT SCHEMAS =============
 
+export const RegisterClinicSchema = z.object({
+  clinicName: z.string().min(2, {
+    message: 'Le nom de la clinique doit contenir au moins 2 caractères',
+  }),
+  address: z.string().optional(),
+  adminName: z.string().min(2, {
+    message: 'Le nom de l\'administrateur doit contenir au moins 2 caractères',
+  }),
+  email: z.email({
+    message: "L'email est requis",
+  }),
+  password: z.string().min(8, {
+    message: 'Le mot de passe doit contenir au moins 8 caractères',
+  }),
+});
+
 export const PatientSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   email: z.string().email('Email invalide').optional(),

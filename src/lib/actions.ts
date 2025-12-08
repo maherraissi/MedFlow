@@ -7,8 +7,9 @@ import { signIn, signOut, auth } from '@/auth';
 import { AuthError } from 'next-auth';
 import { db } from '@/lib/db';
 import Stripe from 'stripe';
-import { LoginSchema, RegisterSchema, PatientSchema, ServiceSchema, ConsultationSchema, PrescriptionSchema, InvoiceSchema, AppointmentSchema, InviteUserSchema, SetPasswordSchema } from './schemas';
+import { LoginSchema, RegisterSchema, RegisterClinicSchema, PatientSchema, ServiceSchema, ConsultationSchema, PrescriptionSchema, InvoiceSchema, AppointmentSchema, InviteUserSchema, SetPasswordSchema } from './schemas';
 import { createCheckoutSession } from './stripe';
+import { sendEmail } from '@/lib/email';
 const ClinicUpdateSchema = z.object({
   name: z.string().min(2),
   email: z.string().email().optional(),
@@ -91,6 +92,54 @@ export const register = async (values: z.infer<typeof RegisterSchema>) => {
   }
 
   return { success: 'Compte créé avec succès !' };
+};
+
+export const registerClinic = async (values: z.infer<typeof RegisterClinicSchema>) => {
+  const validatedFields = RegisterClinicSchema.safeParse(values);
+
+  if (!validatedFields.success) {
+    return { error: 'Champs invalides' };
+  }
+
+  const { clinicName, address, adminName, email, password } = validatedFields.data;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const existingUser = await db.user.findUnique({
+    where: { email },
+  });
+
+
+
+  if (existingUser) {
+    return { error: 'Cet email est déjà utilisé !' };
+  }
+
+  try {
+    await db.$transaction(async (tx) => {
+      const clinic = await tx.clinic.create({
+        data: {
+          name: clinicName,
+          address: address,
+        },
+      });
+
+      await tx.user.create({
+        data: {
+          name: adminName,
+          email,
+          password: hashedPassword,
+          role: 'ADMIN',
+          clinicId: clinic.id,
+          status: 'ACTIVE',
+        },
+      });
+    });
+
+    return { success: 'Clinique créée avec succès ! Connectez-vous.' };
+  } catch (error) {
+    console.error('Registration error:', error);
+    return { error: "Une erreur s'est produite lors de l'inscription." };
+  }
 };
 
 export const logout = async () => {
@@ -291,7 +340,7 @@ export const createAppointment = async (values: z.infer<typeof AppointmentSchema
   }
 
   try {
-    await db.appointment.create({
+    const result = await db.appointment.create({
       data: {
         patientId,
         doctorId,
@@ -300,8 +349,23 @@ export const createAppointment = async (values: z.infer<typeof AppointmentSchema
         endAt,
         notes: notes || '',
         clinicId: session.user.clinicId,
-      }
+      },
+      include: { patient: true, service: true, doctor: true }
     });
+
+    if (result.patient.email) {
+      await sendEmail({
+        to: result.patient.email,
+        subject: 'Confirmation de votre Rendez-vous - MedFlow',
+        html: `
+          <h1>Rendez-vous Confirmé</h1>
+          <p>Bonjour ${result.patient.name},</p>
+          <p>Votre rendez-vous pour <strong>${result.service.name}</strong> avec Dr. ${result.doctor.name} a été confirmé.</p>
+          <p><strong>Date:</strong> ${result.startAt.toLocaleString('fr-FR')}</p>
+          <p>Merci de votre confiance.</p>
+        `,
+      });
+    }
 
     return { success: 'Rendez-vous créé avec succès !' };
   } catch (error) {
@@ -870,8 +934,15 @@ export const getMyPrescriptionsByEmail = async (email: string) => {
         },
       },
     },
-    include: { consultation: { include: { appointment: { include: { service: true, doctor: true } } } } },
-    orderBy: { issuedDate: 'desc' },
+    include: {
+      doctor: { select: { name: true, email: true } },
+      consultation: {
+        include: {
+          patient: { select: { name: true, email: true, dateOfBirth: true } }
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' },
   });
   return data;
 };

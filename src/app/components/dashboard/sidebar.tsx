@@ -5,15 +5,16 @@ export default async function Sidebar() {
   const session = await auth();
   const role = (((session?.user as any)?.role) as string) || 'ADMIN';
   const allowed: Record<string, string[]> = {
-    ADMIN: ['/dashboard', '/dashboard/patients', '/dashboard/appointments', '/dashboard/services', '/dashboard/consultations', '/dashboard/invoices', '/dashboard/users', '/dashboard/settings'],
-    DOCTOR: ['/dashboard', '/dashboard/patients', '/dashboard/appointments', '/dashboard/consultations'],
-    RECEPTIONIST: ['/dashboard', '/dashboard/patients', '/dashboard/appointments', '/dashboard/invoices'],
+    ADMIN: ['/dashboard', '/dashboard/patients', '/dashboard/appointments', '/dashboard/calendar', '/dashboard/services', '/dashboard/consultations', '/dashboard/invoices', '/dashboard/users', '/dashboard/settings'],
+    DOCTOR: ['/dashboard', '/dashboard/patients', '/dashboard/appointments', '/dashboard/calendar', '/dashboard/consultations'],
+    RECEPTIONIST: ['/dashboard', '/dashboard/patients', '/dashboard/appointments', '/dashboard/calendar', '/dashboard/invoices'],
     PATIENT: [],
   };
   const items = [
     { href: '/dashboard', label: 'Accueil', icon: 'home' },
+    { href: '/dashboard/calendar', label: 'Agenda', icon: 'calendar' },
     { href: '/dashboard/patients', label: 'Patients', icon: 'users' },
-    { href: '/dashboard/appointments', label: 'Rendez-vous', icon: 'calendar' },
+    { href: '/dashboard/appointments', label: 'Liste RDV', icon: 'list' },
     { href: '/dashboard/services', label: 'Services', icon: 'briefcase' },
     { href: '/dashboard/consultations', label: 'Consultations', icon: 'clipboard' },
     { href: '/dashboard/invoices', label: 'Factures', icon: 'filetext' },

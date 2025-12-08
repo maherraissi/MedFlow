@@ -1,4 +1,5 @@
-﻿import { auth } from '@/auth';
+﻿
+import { auth } from '@/auth';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/card';
 import { Calendar, FileText, CreditCard, Clock, Activity, Download } from 'lucide-react';
@@ -6,6 +7,7 @@ import Link from 'next/link';
 import { getMyAppointmentsByEmail, getMyInvoicesByEmail, getMyPrescriptionsByEmail } from '@/lib/actions';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import DownloadPrescriptionButton from '@/app/components/pdf/download-prescription-button';
 
 export default async function PortalPage() {
   const session = await auth();
@@ -135,24 +137,38 @@ export default async function PortalPage() {
           <CardContent>
             {prescriptions.length > 0 ? (
               <div className="space-y-4">
-                {prescriptions.slice(0, 3).map((presc: any) => (
-                  <div key={presc.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50">
-                    <div>
-                      <p className="font-medium">
-                        Dr. {presc.doctor?.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(presc.createdAt), 'd MMMM yyyy', { locale: fr })}
-                      </p>
+                {prescriptions.slice(0, 3).map((presc: any) => {
+                  let parsedItems = [];
+                  try {
+                    parsedItems = JSON.parse(presc.items);
+                  } catch (e) {
+                    // Fallback if empty or invalid
+                    parsedItems = [];
+                  }
+
+                  // Safe access to nested properties
+                  const pdfData = {
+                    id: presc.id,
+                    createdAt: presc.createdAt,
+                    doctor: presc.doctor || { name: 'Inconnu', email: '' },
+                    patient: presc.consultation?.patient || { name: 'Patient', email: '', dateOfBirth: null },
+                    items: Array.isArray(parsedItems) ? parsedItems : []
+                  };
+
+                  return (
+                    <div key={presc.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50">
+                      <div>
+                        <p className="font-medium">
+                          Dr. {presc.doctor?.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(presc.createdAt), 'd MMMM yyyy', { locale: fr })}
+                        </p>
+                      </div>
+                      <DownloadPrescriptionButton prescription={pdfData} />
                     </div>
-                    <Button size="sm" variant="outline" asChild>
-                      <Link href={`/api/prescriptions/${presc.id}/pdf`}>
-                        <Download className="h-4 w-4 mr-2" />
-                        PDF
-                      </Link>
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
