@@ -1,5 +1,5 @@
 import { getPatients } from '@/lib/actions';
-import AddPatientForm from '@/app/components/dashboard/add-patient-form';
+import AddEntityForm from '@/app/components/dashboard/add-entity-form';
 import PatientActions from '@/app/components/dashboard/patient-actions';
 import {
   Table,
@@ -17,7 +17,7 @@ export default async function PatientsPage() {
     <div className="motion-safe:animate-fade-in-up">
       <div className="flex items-center justify-between mb-6 motion-safe:animate-fade-in-up animation-delay-100">
         <h1 className="text-2xl font-bold">Gestion des Patients</h1>
-        <AddPatientForm />
+        <AddEntityForm defaultTab="patient" label="Ajouter patient" />
       </div>
       <div className="border rounded-lg motion-safe:animate-fade-in-up animation-delay-200">
         <Table>

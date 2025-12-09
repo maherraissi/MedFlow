@@ -123,14 +123,33 @@ export default async function DashboardPage() {
               <CardTitle className="text-lg">Actions Rapides</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {quickActions.map((action, idx) => (
-                <Link key={idx} href={action.href}>
-                  <Button className={`w-full h-full py-4 flex flex-col gap-2 ${action.color} shadow-sm transition-transform hover:scale-105`} variant="secondary">
-                    {action.icon}
-                    <span>{action.label}</span>
+              {['ADMIN', 'DOCTOR', 'RECEPTIONIST'].includes(role as string) && (
+                <Link href="/dashboard/users/add">
+                  <Button className="w-full h-full py-4 flex flex-col gap-2 bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-transform hover:scale-105" variant="secondary">
+                    <UserCog className="h-5 w-5" />
+                    <span>Ajouter utilisateur</span>
                   </Button>
                 </Link>
-              ))}
+              )}
+
+              {/* Other Actions */}
+              {['ADMIN', 'DOCTOR', 'RECEPTIONIST'].includes(role as string) && (
+                <Link href="/dashboard/appointments">
+                  <Button className="w-full h-full py-4 flex flex-col gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-transform hover:scale-105" variant="secondary">
+                    <Calendar className="h-5 w-5" />
+                    <span>Créer un rendez-vous</span>
+                  </Button>
+                </Link>
+              )}
+
+              {['ADMIN', 'RECEPTIONIST'].includes(role as string) && (
+                <Link href="/dashboard/invoices">
+                  <Button className="w-full h-full py-4 flex flex-col gap-2 bg-orange-500 hover:bg-orange-600 text-white shadow-sm transition-transform hover:scale-105" variant="secondary">
+                    <FileText className="h-5 w-5" />
+                    <span>Nouvelle facture</span>
+                  </Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
 
@@ -160,7 +179,7 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                       <div className={`px-3 py-1 rounded-full text-xs font-medium ${appt.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700' :
-                          appt.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                        appt.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
                         }`}>
                         {appt.status}
                       </div>

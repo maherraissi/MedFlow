@@ -124,12 +124,11 @@ export default auth((req: NextRequest & { auth: any }) => {
   const pathname = nextUrl.pathname;
   const userRole = (req.auth?.user as any)?.role;
   const clinicId = (req.auth?.user as any)?.clinicId;
-
   // --------- Page Routes (UI) ---------
-
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/portal')) {
     // Public routes
     if (pathname.startsWith('/auth')) {
+      console.log('[Middleware] Public auth route:', pathname);
       return NextResponse.next();
     }
 

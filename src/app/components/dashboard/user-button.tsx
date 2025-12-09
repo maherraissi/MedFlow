@@ -14,7 +14,7 @@ export async function UserButton() {
                 <div className="bg-indigo-100 p-2 rounded-full">
                     <User className="h-4 w-4 text-indigo-600" />
                 </div>
-                <span className="text-sm font-medium hidden md:block">{userName}</span>
+                <span className="text-sm font-medium hidden md:block text-black">{userName}</span>
             </div>
             <form action={logout}>
                 <Button type="submit" variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">

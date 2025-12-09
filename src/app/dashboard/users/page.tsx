@@ -1,7 +1,8 @@
 import { getUsers } from '@/lib/actions';
-import AddUserForm from '@/app/components/dashboard/add-user-form';
 import UserActions from '@/app/components/dashboard/user-actions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
+import { Button } from '@/app/components/ui/button';
+import Link from 'next/link';
 
 const roleLabels = {
   ADMIN: 'Administrateur',
@@ -20,7 +21,11 @@ export default async function UsersPage() {
           <h1 className="text-2xl font-bold">Gestion des Utilisateurs</h1>
           <p className="text-sm text-muted-foreground mt-1">Gérez les membres de votre équipe et leurs accès</p>
         </div>
-        <AddUserForm />
+        <Link href="/dashboard/users/add">
+          <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+            Ajouter utilisateur
+          </Button>
+        </Link>
       </div>
       <div className="border rounded-lg bg-card">
         <Table>
@@ -37,20 +42,20 @@ export default async function UsersPage() {
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
+                <TableCell className="font-medium text-black">{user.name}</TableCell>
+                <TableCell className="text-black">{user.email}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 text-xs font-medium rounded-full border ${user.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300' :
-                      user.role === 'DOCTOR' ? 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300' :
-                        user.role === 'RECEPTIONIST' ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300' :
-                          'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300'
+                    user.role === 'DOCTOR' ? 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300' :
+                      user.role === 'RECEPTIONIST' ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300' :
+                        'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300'
                     }`}>
                     {roleLabels[user.role as keyof typeof roleLabels]}
                   </span>
                 </TableCell>
                 {/* Status cell removed */}
-                <TableCell>{new Date(user.createdAt).toLocaleDateString('fr-FR')}</TableCell>
-                <TableCell>
+                <TableCell className="text-black">{new Date(user.createdAt).toLocaleDateString('fr-FR')}</TableCell>
+                <TableCell className="text-black">
                   <UserActions user={user} />
                 </TableCell>
               </TableRow>
